@@ -141,6 +141,10 @@
                 userObjectsRef.child('tweets').child(userKey).push(tweet, function(err) {
                     if (err) {
                         console.warn('error!', err);
+                    } else {
+                        usersRef.child(userKey).child('tweetCount').transaction(function(i) {
+                            return (i || 0) + 1;
+                        });
                     }
                 });
             };
@@ -199,11 +203,8 @@
                 if (err) {
                     console.warn('Tweet deletion error', err);
                 } else {
-                    usersRef.child(userKey).once('value', function(snap) {
-                        var user = snap.val();
-                        var userRef = snap.ref();
-
-                        userRef.update({tweetCount: Math.max(0, (user.tweetCount || 0) - 1)});
+                    usersRef.child(userKey).child('tweetCount').transaction(function(i) {
+                        return Math.max(0, (i || 0) - 1);
                     });
                 }
             });
