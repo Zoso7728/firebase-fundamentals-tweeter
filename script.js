@@ -59,10 +59,24 @@
     var firebaseRoot = 'https://fir-lessons.firebaseio.com/twitterClone/';
     var usersRef = new Firebase(firebaseRoot + 'users');
     var userObjectsRef = new Firebase(firebaseRoot + 'userObjects');
+    var userRef;
+    var userHandler;
+    var timelineRef;
+    var timelineHandler;
 
     usersRef.once('value', function(snap) {
         setUsers(snap.val());
     });
+
+    var stopListening = function() {
+        if (typeof timelineRef === 'object' && typeof timelineHandler) {
+            timelineRef.off('value', timelineHandler);
+        }
+
+        if (typeof userRef === 'object' && typeof userHandler) {
+            userRef.off('value', userHandler);
+        }
+    };
 
     var flatten = function(tweets) {
         var keys = Object.keys(tweets);
@@ -82,16 +96,19 @@
     var handleUserChange = function(e) {
         var userKey = $(e.target).val();
 
+        stopListening();
+
         if (userKey) {
 
-            var userRef = usersRef.child(userKey);
-            var timelineRef = userObjectsRef.child('timeline').child(userKey);
+            timelineRef = userObjectsRef.child('timeline').child(userKey);
 
-            timelineRef.on('value', function(snap) {
+            timelineHandler = timelineRef.on('value', function(snap) {
                 setTimeline(flatten(snap.val()), userKey);
             });
 
-            userRef.on('value', function(snap) {
+            userRef = usersRef.child(userKey);
+
+            userHandler = userRef.on('value', function(snap) {
                 setTweetBox(snap.val());
             });
 
