@@ -190,6 +190,25 @@
             setFollowing({});
         }
 
+        $('#user-timeline').on('click', 'button.remove-tweet', function(e) {
+            var target = $(e.target);
+            var userKey = target.attr('user-key');
+            var tweetKey = target.attr('tweet-key');
+
+            userObjectsRef.child('tweets').child(userKey).child(tweetKey).remove(function(err) {
+                if (err) {
+                    console.warn('Tweet deletion error', err);
+                } else {
+                    usersRef.child(userKey).once('value', function(snap) {
+                        var user = snap.val();
+                        var userRef = snap.ref();
+
+                        userRef.update({tweetCount: Math.max(0, (user.tweetCount || 0) - 1)});
+                    });
+                }
+            });
+        });
+
     };
 
 })();
