@@ -62,6 +62,8 @@
     var userRef;
     var userHandler;
     var tweetBoxClickHandler;
+    var tweetsRef;
+    var tweetAddedHandler;
     var timelineRef;
     var timelineHandler;
 
@@ -129,44 +131,54 @@
 
                 var tweet = {
                     created: (new Date()).toString(),
-                    fannedOut: true,
                     text: userTweetBox.find('textarea').val()
                 };
 
                 userObjectsRef.child('tweets').child(userKey).push(tweet, function(err) {
                     if (err) {
                         console.warn('error!', err);
-                    } else {
-                        userRef.once('value', function(snap) {
-                            var user = snap.val();
-
-                            userObjectsRef.child('timeline').child(userKey).push({
-                                created: tweet.created,
-                                text: tweet.text,
-                                userKey: userKey,
-                                user : {
-                                    email: user.email,
-                                    key: userKey,
-                                    name: user.name,
-                                    username: user.username
-                                }
-                            }, function(err) {
-                                if (err) {
-                                    console.warn('error!', err);
-                                } else {
-                                    userRef.update({tweetCount: (user.tweetCount || 0) + 1}, function(err) {
-                                        if (err) {
-                                            console.warn('error!', err);
-                                        }
-                                    });
-                                }
-                            });
-                        });
                     }
                 });
             };
 
             userTweetBox.on('click', 'button', tweetBoxClickHandler);
+
+            tweetsRef = userObjectsRef.child('tweets').child(userKey);
+
+            tweetAddedHandler = tweetsRef.on('child_added', function(snap) {
+                var tweet = snap.val();
+                var tweetRef = snap.ref();
+
+                if (!tweet.fannedOut) {
+                    usersRef.child(userKey).once('value', function(snap) {
+                        var user = snap.val();
+                        console.log(user);
+                        var tweetUser = {
+                            email: user.email,
+                            key: snap.key(),
+                            name: user.name,
+                            username: user.username
+                        };
+
+                        userObjectsRef.child('followers').child(userKey).child('list').once('value', function(snap) {
+                            var i = snap.numChildren();
+                            snap.forEach(function(childSnap) {
+                                var follower = childSnap.val();
+                                tweet.tweetKey = tweetRef.key();
+                                tweet.user = tweetUser;
+                                tweet.userKey = tweetUser.key;
+
+                                userObjectsRef.child('timeline').child(follower.key).push(tweet, function(err) {
+                                    i -= 1;
+                                    if (i <= 0) {
+                                        tweetRef.child('fannedOut').set(true);
+                                    }
+                                });
+                            });
+                        });
+                    });
+                }
+            });
 
         } else {
             setTweetBox({});
