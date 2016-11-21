@@ -79,6 +79,10 @@
         if (typeof userRef === 'object' && typeof userHandler) {
             userRef.off('value', userHandler);
         }
+
+        if (typeof tweetsRef === 'object' && typeof tweetAddedHandler) {
+            tweetsRef.off('child_added', tweetAddedHandler);
+        }
     };
 
     var flatten = function(tweets) {
