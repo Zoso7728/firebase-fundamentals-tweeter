@@ -52,13 +52,21 @@
             });
         };
 
+    var firebaseRoot = 'https://fir-lessons.firebaseio.com/twitterClone/';
+    var usersRef = new Firebase(firebaseRoot + 'users');
+
+    usersRef.on('value', function(snap) {
+        setUsers(snap.val());
+    });
+
     var handleUserChange = function(e) {
         var userKey = $(e.target).val();
 
         if (userKey) {
 
-
-        
+            usersRef.child(userKey).on('value', function(snap) {
+                setTweetBox(snap.val());
+            });
 
         } else {
             setTweetBox({});
