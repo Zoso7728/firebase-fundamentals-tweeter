@@ -61,6 +61,7 @@
     var userObjectsRef = new Firebase(firebaseRoot + 'userObjects');
     var userRef;
     var userHandler;
+    var tweetBoxClickHandler;
     var timelineRef;
     var timelineHandler;
 
@@ -103,7 +104,7 @@
             timelineRef = userObjectsRef.child('timeline').child(userKey);
 
             timelineHandler = timelineRef.on('value', function(snap) {
-                setTimeline(flatten(snap.val()), userKey);
+                setTimeline(flatten(snap.val()).reverse(), userKey);
             });
 
             userRef = usersRef.child(userKey);
@@ -115,6 +116,47 @@
             userObjectsRef.child('following').child(userKey).once('value', function(snap) {
                 setFollowing(snap.val());
             });
+
+            var userTweetBox = $('#user-tweet-box');
+
+            // Prevent duplicate registration of the tweetBoxClickHandler listener
+            if (typeof tweetBoxClickHandler === 'function') {
+                userTweetBox.off('click', 'button', tweetBoxClickHandler);
+            }
+
+            tweetBoxClickHandler = function(e) {
+                e.preventDefault();
+
+                var tweet = {
+                    created: (new Date()).toString(),
+                    fannedOut: true,
+                    text: userTweetBox.find('textarea').val()
+                };
+
+                userObjectsRef.child('tweets').child(userKey).push(tweet, function(err) {
+                    if (err) {
+                        console.warn('error!', err);
+                    } else {
+                        userRef.once('value', function(snap) {
+                            var user = snap.val();
+
+                            userObjectsRef.child('timeline').child(userKey).push({
+                                created: tweet.created,
+                                text: tweet.text,
+                                userKey: userKey,
+                                user : {
+                                    email: user.email,
+                                    key: userKey,
+                                    name: user.name,
+                                    username: user.username
+                                }
+                            });
+                        });
+                    }
+                });
+            };
+
+            userTweetBox.on('click', 'button', tweetBoxClickHandler);
 
         } else {
             setTweetBox({});
