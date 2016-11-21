@@ -27,19 +27,8 @@
         setFollowing = function(following) {
             console.info('called setFollowing with this following:', following);
 
-            var followedUsers = [];
-            for(var userId in following) {
-                usersRef.child(userId).once('value', function(snap) {
-                    followedUsers.push(snap.val());
-
-                    $('#user-following').html(_.template($('#user-following-template').html())({
-                        following: followedUsers
-                    }));
-                });
-            };
-
             $('#user-following').html(_.template($('#user-following-template').html())({
-                following: followedUsers
+                following: following
             }));
 
         },
@@ -69,6 +58,7 @@
 
     var firebaseRoot = 'https://fir-lessons.firebaseio.com/twitterClone/';
     var usersRef = new Firebase(firebaseRoot + 'users');
+    var userObjectsRef = new Firebase(firebaseRoot + 'userObjects');
 
     usersRef.once('value', function(snap) {
         setUsers(snap.val());
@@ -85,7 +75,7 @@
                 setTweetBox(snap.val());
             });
 
-            userRef.child('following').once('value', function(snap) {
+            userObjectsRef.child('following').child(userKey).once('value', function(snap) {
                 setFollowing(snap.val());
             });
 
