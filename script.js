@@ -150,6 +150,16 @@
                                     name: user.name,
                                     username: user.username
                                 }
+                            }, function(err) {
+                                if (err) {
+                                    console.warn('error!', err);
+                                } else {
+                                    userRef.update({tweetCount: (user.tweetCount || 0) + 1}, function(err) {
+                                        if (err) {
+                                            console.warn('error!', err);
+                                        }
+                                    });
+                                }
                             });
                         });
                     }
