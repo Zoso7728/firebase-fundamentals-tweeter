@@ -73,7 +73,7 @@
 
     var stopListening = function() {
         if (typeof timelineRef === 'object' && typeof timelineHandler) {
-            timelineRef.off('value', timelineHandler);
+            timelineRef.off('child_added', timelineHandler);
         }
 
         if (typeof userRef === 'object' && typeof userHandler) {
@@ -107,10 +107,15 @@
 
         if (userKey) {
 
-            timelineRef = userObjectsRef.child('timeline').child(userKey);
+            var timeline = [];
 
-            timelineHandler = timelineRef.on('value', function(snap) {
-                setTimeline(flatten(snap.val()).reverse(), userKey);
+            timelineRef = userObjectsRef.child('timeline').child(userKey)
+                .orderByKey().limitToLast(3)
+            ;
+
+            timelineHandler = timelineRef.on('child_added', function(snap) {
+                timeline.unshift(snap.val());
+                setTimeline(timeline, userKey);
             });
 
             userRef = usersRef.child(userKey);
