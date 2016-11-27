@@ -64,6 +64,7 @@
     var tweetBoxClickHandler;
     var tweetsRef;
     var tweetAddedHandler;
+    var tweetRemovedHandler;
     var timelineRef;
     var timelineHandler;
 
@@ -82,6 +83,10 @@
 
         if (typeof tweetsRef === 'object' && typeof tweetAddedHandler) {
             tweetsRef.off('child_added', tweetAddedHandler);
+        }
+
+        if (typeof tweetsRef === 'object' && typeof tweetRemovedHandler) {
+            tweetsRef.off('child_removed', tweetRemovedHandler);
         }
     };
 
@@ -191,6 +196,20 @@
                         });
                     });
                 }
+            });
+
+            tweetRemovedHandler = tweetsRef.on('child_removed', function(snap) {
+                var tweetKey = snap.key();
+
+                userObjectsRef.child('followers').child(userKey).child('list').once('value', function(snap) {
+                    snap.forEach(function(followerSnap) {
+                        var follower = followerSnap.val();
+
+                        userObjectsRef.child('timeline').child(follower.key)
+                            .orderByChild('tweetKey').equalTo(tweetKey)
+                        ;
+                    })
+                });
             });
 
         } else {
