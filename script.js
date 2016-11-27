@@ -67,6 +67,7 @@
     var tweetRemovedHandler;
     var timelineRef;
     var timelineHandler;
+    var removeTimelineHandler;
 
     usersRef.once('value', function(snap) {
         setUsers(snap.val());
@@ -87,6 +88,10 @@
 
         if (typeof tweetsRef === 'object' && typeof tweetRemovedHandler) {
             tweetsRef.off('child_removed', tweetRemovedHandler);
+        }
+
+        if (typeof timelineRef === 'object' && typeof removeTimelineHandler) {
+            timelineRef.off('child_removed', removeTimelineHandler);
         }
     };
 
@@ -120,6 +125,14 @@
 
             timelineHandler = timelineRef.on('child_added', function(snap) {
                 timeline.push(snap.val());
+                setTimeline(timeline, userKey);
+            });
+
+            removeTimelineHandler = timelineRef.on('child_removed', function(snap) {
+                timeline = timeline.filter(function(item) {
+                    return item.tweetKey !== snap.val().tweetKey;
+                });
+
                 setTimeline(timeline, userKey);
             });
 
@@ -207,6 +220,11 @@
 
                         userObjectsRef.child('timeline').child(follower.key)
                             .orderByChild('tweetKey').equalTo(tweetKey)
+                            .once('value', function(tmSnap) {
+                                tmSnap.forEach(function(childSnap) {
+                                    childSnap.ref().remove();
+                                })
+                            })
                         ;
                     })
                 });
