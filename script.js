@@ -110,11 +110,11 @@
             var timeline = [];
 
             timelineRef = userObjectsRef.child('timeline').child(userKey)
-                .orderByKey().limitToLast(3)
+                .orderByChild('text')
             ;
 
             timelineHandler = timelineRef.on('child_added', function(snap) {
-                timeline.unshift(snap.val());
+                timeline.push(snap.val());
                 setTimeline(timeline, userKey);
             });
 
